@@ -27,27 +27,30 @@ def index():
 def movies():
     form = MovieForm(request.form)
 
-    if request.method == 'POST' and form.validate():
+    if form.validate_on_submit():
         title = form.title.data
         description = form.description.data
-        poster = form.poster.data
+        poster = request.files['poster']
         created_at = datetime.now()
+        postername = secure_filename(poster.filename)
+        
+        
+        poster.save(os.path.join(app.config['UPLOAD_FOLDER'], postername))
+
 
         # add the movie to database
-        movie = Movie(title, description, poster.filename, created_at)
+        movie = Movie(title=title, description=description, poster=postername, created_at=created_at)
         db.session.add(movie)
         db.session.commit()
 
-        # save the poster file to posters folder
-        filename = secure_filename(poster.filename)
-        poster.save(os.path.join(app.config['POSTERS_FOLDER'], filename))
+
 
         # return a JSON response with the movie data
         response_data = {
             "message": "Movie Successfully added",
             "title": title,
-            "poster": filename,
-            "description": description,
+            "poster": postername,
+            "description": description
         }
         return jsonify(response_data)
 
@@ -55,14 +58,18 @@ def movies():
         # return a JSON response with the form errors
         errors = form_errors(form)
         response_data = {
-            "ERROR": errors
+            "response": errors
         }
         return jsonify(response_data)
+
 
 
 @app.route('/api/v1/csrf-token', methods=['GET'])
 def get_csrf():
     return jsonify({'csrf_token': generate_csrf()})
+
+
+
 ###
 # The functions below should be applicable to all Flask apps.
 ###

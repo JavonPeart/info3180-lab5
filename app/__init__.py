@@ -9,11 +9,13 @@ from flask_migrate import Migrate
 
 app = Flask(__name__)
 app.config.from_object(Config)
-app.config['POSTERS_FOLDER'] = os.path.abspath('./posters')
+app.config['UPLOAD_FOLDER'] = os.path.abspath('./posters')
 
 csrf = CSRFProtect(app)
 
 db = SQLAlchemy(app)
+
+
 # Instantiate Flask-Migrate library here
 migrate = Migrate(app, db)
 cors = CORS(app)
