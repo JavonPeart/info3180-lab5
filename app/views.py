@@ -8,7 +8,7 @@ This file creates your application.
 from datetime import datetime
 from app.models import Movie
 from app import app, db
-from flask import render_template, request, jsonify, send_file
+from flask import redirect, render_template, request, jsonify, send_file, send_from_directory
 from werkzeug.utils import secure_filename
 from app.forms import MovieForm
 import os
@@ -27,7 +27,7 @@ def index():
 def movies():
     form = MovieForm(request.form)
 
-    if form.validate_on_submit():
+    if request.method == "POST" and form.validate_on_submit():
         title = form.title.data
         description = form.description.data
         poster = request.files['poster']
@@ -67,6 +67,25 @@ def movies():
 @app.route('/api/v1/csrf-token', methods=['GET'])
 def get_csrf():
     return jsonify({'csrf_token': generate_csrf()})
+
+
+@app.route('/api/v1/movies', methods=['GET'])
+def get_movies():
+    movies = Movie.query.all()
+    return jsonify({
+        'movies': [{
+            'id': movie.id,
+            'title': movie.title,
+            'description': movie.description,
+            'poster': f'/posters/{movie.poster}'
+        } for movie in movies]
+    })
+
+
+
+@app.route('/posters/<filename>', methods=['GET'])
+def get_poster(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
 
